@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pegue a Fruta!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos gerais para o corpo da página */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #ADD8E6); /* Céu azul suave */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        /* Contêiner principal do jogo */
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 90%; /* Responsividade para telas menores */
+            width: 500px; /* Largura máxima em telas maiores */
+            box-sizing: border-box;
+        }
+
+        /* Título do jogo */
+        h1 {
+            color: #4CAF50; /* Verde vibrante */
+            margin-top: 0;
+            font-size: 2.2em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Estilo do canvas (área de jogo) */
+        canvas {
+            background-color: #E0FFFF; /* Azul claro para o fundo do jogo */
+            border: 4px solid #4CAF50; /* Borda verde */
+            border-radius: 15px;
+            display: block;
+            width: 100%; /* Ocupa a largura total do contêiner */
+            height: 400px; /* Altura fixa para o canvas */
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilo para o placar */
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .score-board span {
+            background-color: #FFEB3B; /* Amarelo para destaque */
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilo dos botões */
+        .button-group {
+            display: flex;
+            gap: 15px; /* Espaçamento entre os botões */
+            flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
+            justify-content: center;
+        }
+
+        button {
+            background-color: #FF9800; /* Laranja vibrante */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+            outline: none;
+        }
+
+        button#endGameButton {
+            background-color: #F44336; /* Vermelho para o botão de encerrar */
+        }
+
+        button:hover {
+            background-color: #FB8C00; /* Laranja mais escuro no hover */
+            transform: translateY(-2px);
+            box-shadow: 0 7px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button#endGameButton:hover {
+            background-color: #D32F2F; /* Vermelho mais escuro no hover */
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mensagens do jogo (início, fim) */
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            display: none; /* Escondido por padrão */
+            z-index: 10; /* Para aparecer acima do canvas */
+        }
+
+        .game-message p {
+            margin-bottom: 20px;
+            color: #673AB7; /* Roxo suave */
+        }
+
+        .game-message .button-group {
+            margin-top: 15px;
+        }
+
+        /* Estilo para as instruções */
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Media Queries para responsividade */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 15px;
+                width: 95%;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            canvas {
+                height: 300px; /* Reduz altura do canvas em telas menores */
+            }
+            .score-board {
+                font-size: 1.1em;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            .game-message {
+                font-size: 1.2em;
+                padding: 20px;
+            }
+            .button-group {
+                flex-direction: column; /* Botões empilhados em telas pequenas */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Pegue a Fruta!</h1>
+        <div class="score-board">
+            <span>Pontos: <span id="score">0</span></span>
+            <span>Perdidas: <span id="missed">0</span></span>
+        </div>
+        <canvas id="gameCanvas" width="480" height="400"></canvas>
+        <div class="button-group">
+            <button id="startButton">Começar Jogo</button>
+            <button id="endGameButton">Encerrar Jogo</button>
+        </div>
+        <p class="instructions">Mova o mouse (ou o dedo no celular) para mover a cesta e pegar as frutas!</p>
+    </div>
+
+    <div id="gameMessage" class="game-message">
+        <p id="messageText"></p>
+        <div class="button-group">
+            <button id="restartButton">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <script>
+        // Obtenção do canvas e seu contexto 2D
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Obtenção dos elementos do placar e botões
+        const scoreDisplay = document.getElementById('score');
+        const missedDisplay = document.getElementById('missed');
+        const startButton = document.getElementById('startButton');
+        const endGameButton = document.getElementById('endGameButton'); // Novo botão
+        const restartButton = document.getElementById('restartButton');
+        const gameMessage = document.getElementById('gameMessage');
+        const messageText = document.getElementById('messageText');
+
+        // Variáveis do jogo
+        let score = 0;
+        let missedFruits = 0;
+        const maxMissed = 5; // Número máximo de frutas que podem ser perdidas
+        let gameRunning = false;
+        let animationFrameId; // ID para controlar o loop de animação
+        let fruitCreationIntervalId; // ID para controlar o intervalo de criação de frutas
+        let speedIncreaseIntervalId; // ID para controlar o intervalo de aumento de velocidade
+
+        // Propriedades da cesta
+        const basket = {
+            width: 100,
+            height: 20,
+            x: canvas.width / 2 - 50, // Posição inicial centralizada
+            y: canvas.height - 30, // Posição no fundo da tela
+            color: '#8B4513' // Cor marrom para a cesta
+        };
+
+        // Array para armazenar as frutas caindo
+        const fruits = [];
+        const fruitRadius = 15;
+        let currentFruitSpeed = 2; // Velocidade inicial das frutas (agora variável)
+        const initialFruitSpeed = 2;
+        const speedIncreaseFactor = 0.1; // Fator de aumento da velocidade
+        const speedIncreaseIntervalTime = 10000; // Aumenta a velocidade a cada 10 segundos
+
+        // Cores e tipos de frutas
+        const fruitTypes = [
+            { type: 'good', color: '#FF0000', points: 1, text: '🍎' }, // Maçã vermelha
+            { type: 'good', color: '#FFA500', points: 1, text: '🍊' }, // Laranja
+            { type: 'good', color: '#FFFF00', points: 1, text: '🍋' }, // Limão
+            { type: 'good', color: '#008000', points: 1, text: '🍏' }, // Maçã verde
+            { type: 'good', color: '#800080', points: 1, text: '🍇' }, // Uva
+            { type: 'bad', color: '#6B8E23', points: -2, text: '🤢' }  // Fruta estragada (verde escuro/marrom)
+        ];
+        const badFruitChance = 0.15; // 15% de chance de aparecer uma fruta estragada
+
+        // Função para desenhar a cesta
+        function drawBasket() {
+            ctx.fillStyle = basket.color;
+            ctx.beginPath();
+            ctx.roundRect(basket.x, basket.y, basket.width, basket.height, 5); // Cesta com cantos arredondados
+            ctx.fill();
+        }
+
+        // Função para criar uma nova fruta
+        function createFruit() {
+            const x = Math.random() * (canvas.width - fruitRadius * 2) + fruitRadius; // Posição X aleatória
+            const isBad = Math.random() < badFruitChance;
+            const fruitData = isBad ? fruitTypes.find(f => f.type === 'bad') : fruitTypes[Math.floor(Math.random() * (fruitTypes.length - 1))]; // Pega uma fruta boa aleatória
+
+            fruits.push({
+                x: x,
+                y: 0,
+                color: fruitData.color,
+                speed: currentFruitSpeed + Math.random() * 0.5, // Velocidade ligeiramente variada
+                type: fruitData.type,
+                points: fruitData.points,
+                text: fruitData.text // Emoji da fruta
+            });
+        }
+
+        // Função para desenhar todas as frutas
+        function drawFruits() {
+            fruits.forEach(fruit => {
+                ctx.fillStyle = fruit.color;
+                ctx.beginPath();
+                ctx.arc(fruit.x, fruit.y, fruitRadius, 0, Math.PI * 2); // Desenha a fruta como um círculo
+                ctx.fill();
+                ctx.strokeStyle = '#333'; // Borda para a fruta
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Desenha o emoji da fruta no centro
+                ctx.font = `${fruitRadius * 1.5}px Arial`; // Tamanho do emoji baseado no raio
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(fruit.text, fruit.x, fruit.y + 2); // Ajuste fino da posição do emoji
+            });
+        }
+
+        // Função para atualizar a posição das frutas e verificar colisões
+        function updateGameArea() {
+            // Limpa o canvas para redesenhar
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenha a cesta
+            drawBasket();
+
+            // Atualiza e desenha as frutas
+            for (let i = 0; i < fruits.length; i++) {
+                let fruit = fruits[i];
+                fruit.y += fruit.speed; // Faz a fruta cair
+
+                // Verifica se a fruta foi pega pela cesta
+                if (fruit.y + fruitRadius > basket.y &&
+                    fruit.x > basket.x &&
+                    fruit.x < basket.x + basket.width) {
+
+                    if (fruit.type === 'good') {
+                        score += fruit.points; // Aumenta a pontuação
+                    } else { // type === 'bad'
+                        score += fruit.points; // Subtrai pontos
+                        if (score < 0) score = 0; // Garante que a pontuação não fique negativa
+                    }
+                    scoreDisplay.textContent = score;
+                    fruits.splice(i, 1); // Remove a fruta pega
+                    i--; // Ajusta o índice após remover um elemento
+                }
+                // Verifica se a fruta passou da cesta (foi perdida)
+                else if (fruit.y + fruitRadius > canvas.height) {
+                    if (fruit.type === 'good') { // Só conta como perdida se for uma fruta boa
+                        missedFruits++; // Aumenta o contador de frutas perdidas
+                        missedDisplay.textContent = missedFruits;
+                    }
+                    fruits.splice(i, 1); // Remove a fruta perdida (boa ou estragada)
+                    i--; // Ajusta o índice
+                }
+            }
+
+            drawFruits();
+
+            // Verifica as condições de fim de jogo
+            if (missedFruits >= maxMissed) {
+                endGame(`Fim de Jogo! Você perdeu ${missedFruits} frutas boas. Pontuação Final: ${score}. Obrigado por jogar!`);
+            } else {
+                // Continua o loop de animação se o jogo estiver rodando
+                if (gameRunning) {
+                    animationFrameId = requestAnimationFrame(updateGameArea);
+                }
+            }
+        }
+
+        // Função para iniciar o jogo
+        function startGame() {
+            score = 0;
+            missedFruits = 0;
+            currentFruitSpeed = initialFruitSpeed; // Reseta a velocidade
+            scoreDisplay.textContent = score;
+            missedDisplay.textContent = missedFruits;
+            fruits.length = 0; // Limpa todas as frutas existentes
+            gameRunning = true;
+            gameMessage.style.display = 'none'; // Esconde a mensagem de início/fim
+
+            // Limpa qualquer intervalo anterior para evitar múltiplos intervalos
+            if (fruitCreationIntervalId) {
+                clearInterval(fruitCreationIntervalId);
+            }
+            if (speedIncreaseIntervalId) {
+                clearInterval(speedIncreaseIntervalId);
+            }
+
+            // Começa a criar frutas em intervalos regulares
+            fruitCreationIntervalId = setInterval(createFruit, 1500); // Uma nova fruta a cada 1.5 segundos
+
+            // Aumenta a velocidade das frutas periodicamente
+            speedIncreaseIntervalId = setInterval(() => {
+                if (gameRunning) {
+                    currentFruitSpeed += speedIncreaseFactor;
+                }
+            }, speedIncreaseIntervalTime);
+
+
+            // Inicia o loop principal do jogo
+            updateGameArea();
+        }
+
+        // Função para finalizar o jogo
+        function endGame(message) {
+            gameRunning = false;
+            cancelAnimationFrame(animationFrameId); // Para o loop de animação
+            clearInterval(fruitCreationIntervalId); // Para a criação de frutas
+            clearInterval(speedIncreaseIntervalId); // Para o aumento de velocidade
+            gameMessage.style.display = 'flex'; // Mostra a mensagem de fim de jogo
+            messageText.textContent = message;
+        }
+
+        // Event Listeners para interação
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        endGameButton.addEventListener('click', () => { // Listener para o novo botão de encerrar
+            endGame(`Jogo Encerrado! Sua pontuação foi: ${score}. Obrigado por jogar!`);
+        });
+
+        // Movimento da cesta com o mouse/toque
+        canvas.addEventListener('mousemove', (e) => {
+            if (gameRunning) {
+                // Calcula a posição do mouse em relação ao canvas
+                const rect = canvas.getBoundingClientRect();
+                let mouseX = e.clientX - rect.left;
+
+                // Garante que a cesta não saia dos limites do canvas
+                basket.x = mouseX - basket.width / 2;
+                if (basket.x < 0) basket.x = 0;
+                if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
+            }
+        });
+
+        // Movimento da cesta com o toque (para dispositivos móveis)
+        canvas.addEventListener('touchmove', (e) => {
+            if (gameRunning) {
+                e.preventDefault(); // Previne o scroll da página ao mover o dedo no canvas
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                let touchX = touch.clientX - rect.left;
+
+                basket.x = touchX - basket.width / 2;
+                if (basket.x < 0) basket.x = 0;
+                if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
+            }
+        }, { passive: false }); // 'passive: false' para permitir preventDefault
+
+        // Exibe a mensagem inicial ao carregar a página
+        window.onload = () => {
+            endGame('Bem-vindo ao Pegue a Fruta! Pegue o máximo de frutas que puder.');
+        };
+
+        // Ajusta o tamanho do canvas para ser responsivo
+        function resizeCanvas() {
+            const container = document.querySelector('.game-container');
+            // Define a largura do canvas baseada na largura do contêiner, mantendo a proporção ou um máximo
+            canvas.width = container.clientWidth - (25 * 2); // Largura do contêiner menos o padding
+            if (canvas.width > 480) { // Limita a largura máxima para não ficar muito grande em desktops
+                canvas.width = 480;
+            }
+            // Recalcula a posição da cesta para centralizar na nova largura
+            basket.x = canvas.width / 2 - basket.width / 2;
+            // Redesenha o jogo se estiver rodando
+            if (gameRunning) {
+                updateGameArea();
+            } else {
+                // Se não estiver rodando, apenas desenha a cesta na posição inicial
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawBasket();
+            }
+        }
+
+        // Adiciona um listener para redimensionar o canvas quando a janela é redimensionada
+        window.addEventListener('resize', resizeCanvas);
+        // Chama a função de redimensionamento uma vez para configurar o tamanho inicial
+        resizeCanvas();
+
+    </script>
+</body>
+</html>
